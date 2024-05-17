@@ -1,11 +1,12 @@
 #pragma once
 #include <vector>
+#include <memory>
 
 struct Process {
 	int pid;
 	int arrivalTime;
-	int remainingBurstTime;
-	int totalBurstTime;
+	int remainingBurst;
+	int totalBurst;
 	int priority;
 
 	bool operator==(const Process& other) const {
@@ -13,4 +14,4 @@ struct Process {
 	}
 };
 
-std::vector<Process>& generateProcesses(int amount);
+std::vector<Process> generateProcesses(int amount);

@@ -3,11 +3,11 @@
 
 struct SchedStats {
 	std::string AlgoUsed;
-	int avgWaitTime;
+	double avgWaitTime;
 	//int minWaitTime;
 	//int maxWaitTime;
-	int avgTurnAroundTime;
+	double avgTurnAroundTime;
 	//int minTurnAroundTime;
 	//int maxTurnAroundTime;
-	int avgBurstTime;
+	double avgBurstTime;
 };

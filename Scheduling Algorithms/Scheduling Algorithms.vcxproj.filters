@@ -39,6 +39,15 @@
     <ClCompile Include="RoundRobin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SimInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowProc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Render.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FCFS.h">
@@ -51,6 +60,15 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="RoundRobin.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SimInfo.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowProc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Render.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

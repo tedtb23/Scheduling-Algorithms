@@ -15,16 +15,16 @@ SchedStats fcfs(std::vector<Process>& processes) {
 		if (clock >= pros.arrivalTime) {
 			long startTime = clock;
 			totalWaitTime += startTime - pros.arrivalTime;
-			totalTurnAroundTime += (startTime + pros.totalBurstTime) - pros.arrivalTime;
-			totalBurstTime += pros.totalBurstTime;
-			clock = (startTime + pros.totalBurstTime);
+			totalTurnAroundTime += (startTime + pros.totalBurst) - pros.arrivalTime;
+			totalBurstTime += pros.totalBurst;
+			clock = (startTime + pros.totalBurst);
 		}
 		else { //execute this if the arrivalTime of the next process has not been met. wait time omitted since it is always zero here.
-			totalTurnAroundTime += pros.totalBurstTime;
-			totalBurstTime += pros.totalBurstTime;
-			clock = (pros.arrivalTime + pros.totalBurstTime);
+			totalTurnAroundTime += pros.totalBurst;
+			totalBurstTime += pros.totalBurst;
+			clock = (pros.arrivalTime + pros.totalBurst);
 		}
 	}
-	return {"FCFS", (totalWaitTime / (long)n), (totalTurnAroundTime / (long)n), (totalBurstTime / (long)n)};
+	return {"FCFS", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), (totalBurstTime / (double)n)};
 }
 

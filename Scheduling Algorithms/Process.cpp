@@ -8,8 +8,8 @@ static bool compar(const Process& p1, const Process& p2) {
 	return (p1.arrivalTime < p2.arrivalTime);
 }
 
-std::vector<Process>& generateProcesses(int amount) {
-	std::vector<Process> *processesPtr = new std::vector<Process>;
+std::vector<Process> generateProcesses(int amount) {
+	std::vector<Process> processes;
 	auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	std::mt19937 gen(seed);
 
@@ -20,9 +20,9 @@ std::vector<Process>& generateProcesses(int amount) {
 		if (currBurstTime <= 0) currBurstTime = 1;
 		int currPriority = gen() % 10;
 		
-		processesPtr->push_back({ currPID, currArrivalTime, currBurstTime, currBurstTime, currPriority });
+		processes.push_back({ currPID, currArrivalTime, currBurstTime, currBurstTime, currPriority });
 	}
-	std::sort(processesPtr->begin(), processesPtr->end(), compar);
+	std::sort(processes.begin(), processes.end(), compar);
 
-	return *processesPtr;
+	return processes;
 }

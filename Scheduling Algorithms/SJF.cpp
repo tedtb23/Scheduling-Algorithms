@@ -24,8 +24,8 @@ SchedStats sjf(std::vector<Process>& processes) {
 		if (ready.size()) {
 			//find minBurstTime and execute that process.
 			for (size_t j = 0; j < ready.size(); j++) {
-				if (minBurstTime > ready[j].totalBurstTime) {
-					minBurstTime = ready[j].totalBurstTime;
+				if (minBurstTime > ready[j].totalBurst) {
+					minBurstTime = ready[j].totalBurst;
 					pros = ready[j];
 				}
 			}
@@ -33,10 +33,10 @@ SchedStats sjf(std::vector<Process>& processes) {
 			auto newEnd = std::remove(ready.begin(), ready.end(), pros);
 			ready.erase(newEnd, ready.end());
 			startTime = clock;
-			endTime = startTime + pros.totalBurstTime;
+			endTime = startTime + pros.totalBurst;
 			totalWaitTime += startTime - pros.arrivalTime;
 			totalTurnAroundTime += endTime - pros.arrivalTime;
-			totalBurstTime += pros.totalBurstTime;
+			totalBurstTime += pros.totalBurst;
 			clock = endTime;
 		}
 		
@@ -48,5 +48,5 @@ SchedStats sjf(std::vector<Process>& processes) {
 		if (i < n && !ready.size() && clock < processes[i].arrivalTime) clock = processes[i].arrivalTime;
 		
 	}
-	return { "SJF", (totalWaitTime / (long)n), (totalTurnAroundTime / (long)n), (totalBurstTime / (long)n) };
+	return { "SJF", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), (totalBurstTime / (double)n) };
 }

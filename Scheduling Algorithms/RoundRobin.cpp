@@ -1,6 +1,9 @@
 #include "RoundRobin.h"
+#include <stdexcept>
 
 SchedStats roundRobin(std::vector<Process>& processes, int timeQuantum) {
+	if (timeQuantum <= 0) throw std::invalid_argument("Time quantum must be greater than zero");
+
 	std::vector<Process> ready;
 	Process pros; //currently "executing" process.
 	size_t i = 0;
@@ -26,12 +29,19 @@ SchedStats roundRobin(std::vector<Process>& processes, int timeQuantum) {
 			pros = ready[0];
 			ready.erase(ready.begin());
 			startTime = clock;
-			endTime = startTime + timeQuantum;
-			//totalWaitTime += startTime - pros.arrivalTime;
-			//totalTurnAroundTime += endTime - pros.arrivalTime;
-			totalBurstTime += timeQuantum;
+			if (pros.remainingBurst > timeQuantum) {
+				endTime = startTime + timeQuantum;
+				pros.remainingBurst -= timeQuantum;
+				ready.push_back(pros);
+			}
+			else {
+				endTime = startTime + pros.remainingBurst;
+				pros.remainingBurst = 0;
+				totalTurnAroundTime += endTime - pros.arrivalTime;
+				totalWaitTime += (endTime - pros.arrivalTime) - pros.totalBurst;
+				totalBurstTime += pros.totalBurst;
+			}
 			clock = endTime;
-			if (pros.remainingBurstTime > 0) ready.push_back(pros);
 		}
 
 		//if we are out of unarrived and arrived processes, exit the loop.
@@ -42,5 +52,5 @@ SchedStats roundRobin(std::vector<Process>& processes, int timeQuantum) {
 		if (i < n && !ready.size() && clock < processes[i].arrivalTime) clock = processes[i].arrivalTime;
 
 	}
-	return { "Round Robin", (totalWaitTime / (long)n), (totalTurnAroundTime / (long)n), (totalBurstTime / (long)n) };
+	return { "Round Robin", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), (totalBurstTime / (double)n) };
 }
