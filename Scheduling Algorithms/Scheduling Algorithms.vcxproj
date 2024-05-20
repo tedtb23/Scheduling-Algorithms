@@ -132,21 +132,24 @@
     <ClCompile Include="Render.cpp" />
     <ClCompile Include="RoundRobin.cpp" />
     <ClCompile Include="SchedSim.cpp" />
-    <ClCompile Include="SchedStats.h" />
+    <ClCompile Include="SchedStats.hpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Process.h" />
+    <ClCompile Include="Process.hpp" />
     <ClCompile Include="SimInfo.cpp" />
     <ClCompile Include="SJF.cpp" />
+    <ClCompile Include="TrackBar.cpp" />
     <ClCompile Include="WindowProc.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FCFS.h" />
-    <ClInclude Include="Render.h" />
-    <ClInclude Include="RoundRobin.h" />
-    <ClInclude Include="SchedSim.h" />
-    <ClInclude Include="SimInfo.h" />
-    <ClInclude Include="SJF.h" />
-    <ClInclude Include="WindowProc.h" />
+    <ClInclude Include="FCFS.hpp" />
+    <ClInclude Include="GanttNode.hpp" />
+    <ClInclude Include="Render.hpp" />
+    <ClInclude Include="RoundRobin.hpp" />
+    <ClInclude Include="SchedSim.hpp" />
+    <ClInclude Include="SimInfo.hpp" />
+    <ClInclude Include="SJF.hpp" />
+    <ClInclude Include="TrackBar.hpp" />
+    <ClInclude Include="WindowProc.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

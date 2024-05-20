@@ -1,15 +1,22 @@
-#pragma once
-#include "WindowProc.h"
-#include "Render.h"
-#include "SchedSim.h"
-#include "SchedStats.h"
+#include "WindowProc.hpp"
+#include "Render.hpp"
+#include "SchedSim.hpp"
+#include "SchedStats.hpp"
 #include <Windows.h>
 #include <vector>
 #include <string>
 #include <memory>
+#include <stdexcept>
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int nCmdShow) {
-    SimInfo simInfo = simulate(100);
+    SimInfo simInfo;
+    try {
+        simInfo = simulate(10);
+    }
+    catch (std::invalid_argument invalidArg) {
+        MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
+        return -1;
+    }
     MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
 
     // Register the window class.
@@ -44,8 +51,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
         L"Scheduling Simulation",       // Window text
         WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU | WS_VSCROLL,  // Window style
         
-        // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, 1200, 817,
+        // Position and size
+        100, 100, 1200, 820,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -58,6 +65,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
     }
 
     ShowWindow(hwnd, nCmdShow);
+    
 
     //Get monitor dimensions
     //if (!GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &monitorInfo)) {

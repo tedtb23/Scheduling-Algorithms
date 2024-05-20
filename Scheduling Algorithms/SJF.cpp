@@ -1,18 +1,24 @@
-#include "SJF.h"
+#include "SJF.hpp"
+#include "SchedStats.hpp"
+#include "Process.hpp"
+#include "GanttNode.hpp"
 
-SchedStats sjf(std::vector<Process>& processes) {
+SchedStats sjf(const std::vector<Process>& processes) {
+	std::vector<GanttNode> ganttChart;
 	std::vector<Process> ready;
 	Process pros; //currently "executing" process.
 	size_t i = 0;
 	size_t n = processes.size();
-	long startTime = LONG_MAX;
-	long endTime = LONG_MAX;
-	long minBurstTime = LONG_MAX;
-	long clock = 0;
-
-	long totalWaitTime = 0;
-	long totalTurnAroundTime = 0;
-	long totalBurstTime = 0;
+	size_t startTime;
+	size_t endTime;
+	size_t waitTime;
+	size_t turnAroundTime;
+	int minBurstTime = LONG_MAX;
+	size_t clock = 0;
+	size_t totalWaitTime = 0;
+	size_t totalTurnAroundTime = 0;
+	size_t maxWaitTime = 0;
+	size_t maxTurnAroundTime = 0;
 
 	if(i < n) clock = processes[i].arrivalTime;
 	while (true) {
@@ -34,9 +40,13 @@ SchedStats sjf(std::vector<Process>& processes) {
 			ready.erase(newEnd, ready.end());
 			startTime = clock;
 			endTime = startTime + pros.totalBurst;
-			totalWaitTime += startTime - pros.arrivalTime;
-			totalTurnAroundTime += endTime - pros.arrivalTime;
-			totalBurstTime += pros.totalBurst;
+			waitTime = startTime - pros.arrivalTime;
+			turnAroundTime = endTime - pros.arrivalTime;
+			if (waitTime >= maxWaitTime) maxWaitTime = waitTime;
+			if (turnAroundTime >= maxTurnAroundTime) maxTurnAroundTime = turnAroundTime;
+			ganttChart.push_back({ pros, startTime, endTime });
+			totalWaitTime += waitTime;
+			totalTurnAroundTime += turnAroundTime;
 			clock = endTime;
 		}
 		
@@ -48,5 +58,5 @@ SchedStats sjf(std::vector<Process>& processes) {
 		if (i < n && !ready.size() && clock < processes[i].arrivalTime) clock = processes[i].arrivalTime;
 		
 	}
-	return { "SJF", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), (totalBurstTime / (double)n) };
+	return { "SJF", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, std::move(ganttChart) };
 }

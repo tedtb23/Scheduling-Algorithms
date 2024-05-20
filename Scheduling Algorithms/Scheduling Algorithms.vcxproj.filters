@@ -18,12 +18,6 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Process.h">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SchedStats.h">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SchedSim.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,28 +42,43 @@
     <ClCompile Include="Render.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TrackBar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Process.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SchedStats.hpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="FCFS.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="TrackBar.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SchedSim.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="FCFS.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SJF.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="Render.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RoundRobin.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="RoundRobin.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SimInfo.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="SchedSim.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WindowProc.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="SimInfo.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Render.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="SJF.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowProc.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GanttNode.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

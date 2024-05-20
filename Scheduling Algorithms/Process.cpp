@@ -1,4 +1,4 @@
-#include "Process.h"
+#include "Process.hpp"
 #include <iostream>
 #include <chrono>
 #include <random>
@@ -15,7 +15,7 @@ std::vector<Process> generateProcesses(int amount) {
 
 	for (int i = 0; i < amount; i++) {
 		int currPID = i;
-		int currArrivalTime = gen() % 10000;
+		int currArrivalTime = gen() % amount;
 		int currBurstTime = gen() % 100;
 		if (currBurstTime <= 0) currBurstTime = 1;
 		int currPriority = gen() % 10;

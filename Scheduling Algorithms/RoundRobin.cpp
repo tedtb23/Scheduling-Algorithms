@@ -1,20 +1,24 @@
-#include "RoundRobin.h"
+#include "RoundRobin.hpp"
+#include "SchedStats.hpp"
+#include "Process.hpp"
+#include "GanttNode.hpp"
 #include <stdexcept>
 
-SchedStats roundRobin(std::vector<Process>& processes, int timeQuantum) {
+SchedStats roundRobin(const std::vector<Process>& processes, int timeQuantum) {
 	if (timeQuantum <= 0) throw std::invalid_argument("Time quantum must be greater than zero");
 
+	std::vector<GanttNode> ganttChart;
 	std::vector<Process> ready;
 	Process pros; //currently "executing" process.
 	size_t i = 0;
 	size_t n = processes.size();
-	long startTime = LONG_MAX;
-	long endTime = LONG_MAX;
-	long clock = 0;
-
-	long totalWaitTime = 0;
-	long totalTurnAroundTime = 0;
-	long totalBurstTime = 0;
+	size_t startTime = LONG_MAX;
+	size_t endTime = LONG_MAX;
+	size_t clock = 0;
+	size_t totalWaitTime = 0;
+	size_t totalTurnAroundTime = 0;
+	size_t maxWaitTime = 0;
+	size_t maxTurnAroundTime = 0;
 
 	if (i < n) clock = processes[i].arrivalTime;
 	while (true) {
@@ -39,7 +43,6 @@ SchedStats roundRobin(std::vector<Process>& processes, int timeQuantum) {
 				pros.remainingBurst = 0;
 				totalTurnAroundTime += endTime - pros.arrivalTime;
 				totalWaitTime += (endTime - pros.arrivalTime) - pros.totalBurst;
-				totalBurstTime += pros.totalBurst;
 			}
 			clock = endTime;
 		}
@@ -52,5 +55,5 @@ SchedStats roundRobin(std::vector<Process>& processes, int timeQuantum) {
 		if (i < n && !ready.size() && clock < processes[i].arrivalTime) clock = processes[i].arrivalTime;
 
 	}
-	return { "Round Robin", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), (totalBurstTime / (double)n) };
+	return { "Round Robin", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, std::move(ganttChart) };
 }

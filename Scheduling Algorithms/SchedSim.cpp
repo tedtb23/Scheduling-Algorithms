@@ -1,14 +1,13 @@
-#pragma once
-#include "SchedSim.h"
-#include "SchedStats.h"
-#include "Process.h"
-#include "FCFS.h"
-#include "SJF.h"
-#include "RoundRobin.h"
+#include "SchedSim.hpp"
+#include "SchedStats.hpp"
+#include "Process.hpp"
+#include "FCFS.hpp"
+#include "SJF.hpp"
+#include "RoundRobin.hpp"
 #include <vector>
 #include <iostream>
 #include <string>
-#include <memory>
+#include <stdexcept>
 
 static void printEquals(int amount) {
 	for (int i = 0; i < amount; i++) std::cout << "=";
@@ -46,19 +45,19 @@ static void printStats(std::vector<SchedStats>& stats, std::vector<Process>& pro
 		std::string currAlgo = stats[i].AlgoUsed;
 		std::cout << currAlgo << " AVG WAIT TIME: " << stats[i].avgWaitTime << std::endl;
 		std::cout << currAlgo << " AVG TURN AROUND TIME : " << stats[i].avgTurnAroundTime << std::endl;
-		std::cout << currAlgo << " AVG BURST TIME: " << stats[i].avgBurstTime << std::endl;
+		//std::cout << currAlgo << " AVG BURST TIME: " << stats[i].avgBurstTime << std::endl;
 		printEquals(50);
 	}
 }
 
 SimInfo simulate(int amount) {
-	//fix me
-	//std::unique_ptr<std::vector<SchedStats>> statsPtr = std::make_unique<std::vector<SchedStats>>();
-	//std::unique_ptr<std::vector<Process>> processesPtr = std::make_unique<std::vector<Process>>();
-	//std::unique_ptr<SimInfo> simInfoPtr = std::make_unique<SimInfo>(*processesPtr, *statsPtr);
-	//std::vector<Process>& processes = simInfoPtr->processes;
-	//std::vector<SchedStats>& stats = simInfoPtr->stats;
+	constexpr int maxProcesses = 100;
+	constexpr int minProcesses = 10;
+	if(amount > maxProcesses) throw std::invalid_argument("processes specified is greater than maximum");
+	if(amount <= 0) throw std::invalid_argument("processes specified is less than or equal to zero");
 	SimInfo simInfo;
+	simInfo.minProcesses = minProcesses;
+	simInfo.maxProcesses = maxProcesses;
 	std::vector<SchedStats>& stats = simInfo.stats;
 	std::vector<Process>& processes = simInfo.processes;
 

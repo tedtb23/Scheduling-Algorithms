@@ -1,28 +1,28 @@
-#pragma once
 #include <Windows.h>
-#include "SchedStats.h"
-#include "Process.h"
-#include "SimInfo.h"
-#include "Render.h"
+#include "SchedStats.hpp"
+#include "Process.hpp"
+#include "SimInfo.hpp"
+#include "Render.hpp"
+#include <CommCtrl.h>
 
 static void displaySchedStat(const HDC& ctx, const SchedStats& stat, int offset, const int offsetyAmount) {
     std::string avgWait = "Avg Wait: " + std::to_string(stat.avgWaitTime);
     std::string avgTurnAround = "Avg TurnAround: " + std::to_string(stat.avgTurnAroundTime);
-    std::string avgBurst = "Avg Burst: " + std::to_string(stat.avgBurstTime);
+    //std::string avgBurst = "Avg Burst: " + std::to_string(stat.avgBurstTime);
 
     TextOutA(ctx, 0, offset, stat.AlgoUsed.c_str(), (int)stat.AlgoUsed.length());
     offset += offsetyAmount;
     TextOutA(ctx, 0, offset, avgWait.c_str(), (int)avgWait.length());
     offset += offsetyAmount;
     TextOutA(ctx, 0, offset, avgTurnAround.c_str(), (int)avgTurnAround.length());
-    offset += offsetyAmount;
-    TextOutA(ctx, 0, offset, avgBurst.c_str(), (int)avgBurst.length());
-    offset += offsetyAmount + 10;
+    //offset += offsetyAmount;
+    //TextOutA(ctx, 0, offset, avgBurst.c_str(), (int)avgBurst.length());
 }
 
-static void displaySchedStats(const HDC& ctx, const std::vector<SchedStats>& stats, const int height, int offset, const int offsetyAmount) {
-    for (SchedStats stat : stats) {
-        if (offset >= height) break;
+static void displaySchedStats(const HDC& ctx, const std::vector<SchedStats>& stats, const int startIdx, const int maxY, int offset, const int offsetyAmount) {
+    for (int i = startIdx; i < stats.size(); i++) {
+        const SchedStats& stat = stats[i];
+        if (offset >= maxY) break;
         displaySchedStat(ctx, stat, offset, offsetyAmount);
         offset += (offsetyAmount * 4) + 10;
     }
@@ -31,19 +31,19 @@ static void displaySchedStats(const HDC& ctx, const std::vector<SchedStats>& sta
 static void displayProcesses(
     const HDC& ctx,
     const std::vector<Process>& processes,
-    const int height,
-    const int startIdx, const int endIdx, 
-    const int startX, const int startY, 
+    const long maxY,
+    const size_t startIdx, const size_t endIdx, 
+    const long startX, const long startY, 
     const int offsetyAmount) {
 
-    int currIdx = startIdx;
-    int offset = startY;
+    size_t currIdx = startIdx;
+    long offset = startY;
     //const int textHeight = (offsetyAmount * 4) + 10;
 
     while (currIdx <= endIdx && currIdx < processes.size()) {
-        if (offset >= height) break;
+        if (offset >= maxY) break;
         const Process& p = processes[currIdx];
-        std::string pid = "PID: " + std::to_string(currIdx);
+        std::string pid = "PID: " + std::to_string(p.pid);
         std::string arrivalTime = "Arrival Time: " + std::to_string(p.arrivalTime);
         std::string priority = "Priority: " + std::to_string(p.priority);
         std::string burstTime = "Burst Time: " + std::to_string(p.totalBurst);
@@ -60,17 +60,47 @@ static void displayProcesses(
     }
 }
 
+static void displayGanttChart(const HDC& ctx, const std::vector<GanttNode>& ganttChart, const size_t startIdx, const size_t endIdx, RECT rect) {
+    SelectObject(ctx, GetStockObject(NULL_BRUSH)); //don't fill rects
+    constexpr int nodeWidth = 50;
+    constexpr int nodeHeight = 50;
+    long width = rect.right - rect.left;
+    long height = rect.bottom - rect.top;
+    long x = rect.left;
+    long y = rect.top;
+    for (int i = startIdx; i <= endIdx; i++) {
+        if (y >= rect.bottom) break;
+        const GanttNode& gNode = ganttChart[i];
+        std::string pid = std::to_string(gNode.p.pid);
+        Rectangle(ctx, x, y, x + nodeWidth, y + nodeHeight);
+        TextOutA(ctx, ((x + nodeWidth) + x) / 2, ((y + nodeHeight) + y) / 2, pid.c_str(), pid.length());
+        x += nodeWidth;
+        if (x >= rect.right) {
+            x = rect.left;
+            y += nodeHeight;
+        }
+    }
+    DeleteObject(GetStockObject(NULL_BRUSH));
+}
+
 void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
-    const int offsetxAmount = 230;
-    const int offsetyAmount = 30;
-    const int prosTextHeight = (offsetyAmount * 4) + 10;
-    const int statTextHeight = prosTextHeight;
+    constexpr int ganttOffset = 500;
+    constexpr int offsetxAmount = 230;
+    constexpr int offsetyAmount = 30;
+    constexpr int prosTextHeight = (offsetyAmount * 4) + 10;
+    constexpr int statTextHeight = prosTextHeight;
     int xPos; //xScroll position
     static int yPos; //yScroll position
     static int oldYPos;
     PAINTSTRUCT ps;
     SCROLLINFO si;
     HDC ctx = BeginPaint(hwnd, &ps);
+
+    //for trackbar
+    HWND hwndTrackbar;
+    RECT trackbarRect;
+    static int trackbarPos;
+    ///
 
     //get window bounds
     RECT windowRect;
@@ -80,27 +110,10 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     int width = windowRect.right - windowRect.left;
     int height = windowRect.bottom - windowRect.top;
     ///
-    /*
-    LONG top = ps.rcPaint.top;
-    LONG left = ps.rcPaint.left;
-    LONG bottom = ps.rcPaint.bottom;
-    LONG right = ps.rcPaint.right;
-    RECT updateRect = { left, top, right, bottom };
-    static short r = 0;
-    static short g = 0;
-    static short b = 0;
-    HBRUSH color = CreateSolidBrush(RGB(r,g,b));
-    FillRect(ctx, &updateRect, color);
-    r++;
-    b++;
-    if (r > 255) r = 0;
-    if (g > 255) g = 0;
-    if (b > 255) b = 0;
-    */
     
     //select in new font and color
-    const COLORREF textRGB = RGB(255, 255, 255);
-    const COLORREF bkRGB = RGB(30, 30, 30);
+    constexpr COLORREF textRGB = RGB(255, 255, 255);
+    constexpr COLORREF bkRGB = RGB(30, 30, 30);
     const COLORREF oldBKColor = SetBkColor(ctx, bkRGB);
     const COLORREF oldTextColor = SetTextColor(ctx, textRGB);
     HFONT hFont, hOldFont;
@@ -124,20 +137,23 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     
     //paint stats in updated area
     if (yPos < simInfo.stats.size() && yPos >= 0) {
-        if (oldYPos > yPos) { //scroll up, repaint stat which scrolled back into view
-            displaySchedStat(ctx, simInfo.stats[yPos], 0, offsetyAmount);
-        }
-        else if (oldYPos < yPos) {  //scroll down (ignore)
-            
-        }
-        else { //window occluded
-            displaySchedStats(ctx, simInfo.stats, bottom, 0, offsetyAmount);
-        }
+        displaySchedStats(ctx, simInfo.stats, yPos, bottom, 0, offsetyAmount);
     }
 
+    for (SchedStats stat : simInfo.stats) {
+        displayGanttChart(ctx, stat.ganttChart, 0, stat.ganttChart.size() - 1, { 0, 400, 800, height });
+    }
+    
+    //display processes used text and trackbar pos
     if (yPos == 0) {
         std::string pTitle = "Processes Used : ";
-        TextOutA(ctx, right - offsetxAmount - 180, 0, pTitle.c_str(), (int)pTitle.length());
+        TextOutA(ctx, width - offsetxAmount - 180, 0, pTitle.c_str(), (int)pTitle.length());
+        hwndTrackbar = FindWindowEx(hwnd, NULL, TRACKBAR_CLASS, L"Track Bar"); //get handle to child trackbar window.
+        GetWindowRect(hwndTrackbar, &trackbarRect);
+        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
+        trackbarPos = (int) SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
+        std::string trackBarPosStr = "Process Amount : " + std::to_string(trackbarPos);
+        TextOutA(ctx, trackbarRect.left + 10, trackbarRect.bottom, trackBarPosStr.c_str(), (int)trackBarPosStr.length());
     }
     
     //paint processes in updated area
@@ -152,6 +168,5 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     }
     
     DeleteObject(hFont);
-    //DeleteObject(color);
     EndPaint(hwnd, &ps);
 }
