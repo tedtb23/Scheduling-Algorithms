@@ -9,15 +9,24 @@
 #include <stdexcept>
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int nCmdShow) {
+    MONITORINFO monitorInfo;
     SimInfo simInfo;
     try {
         simInfo = simulate(10);
     }
     catch (std::invalid_argument invalidArg) {
         MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
-        return -1;
+        return 0;
     }
-    MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
+
+   int height = GetSystemMetrics(SM_CYSCREEN);
+    //Get monitor dimensions
+    //if (!GetMonitorInfo(MonitorFromWindow(, MONITOR_DEFAULTTOPRIMARY), &monitorInfo)) {
+    //    MessageBox(NULL, L"Failed to get monitor info.", L"Error", MB_ICONEXCLAMATION | MB_OK);
+    //    return ERROR;
+    //}
+
+    
 
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"SchedSimWindowClass";
@@ -41,7 +50,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
         MessageBox(NULL, L"Window Registration Failed", L"Error", MB_ICONEXCLAMATION | MB_OK);
         return GetLastError();
     }
-
+    
     // Create the window.
     HWND hwnd;
 
@@ -52,7 +61,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
         WS_OVERLAPPED | WS_MINIMIZEBOX | WS_SYSMENU | WS_VSCROLL,  // Window style
         
         // Position and size
-        100, 100, 1200, 820,
+        0, 0, 900, height - 90,
 
         NULL,       // Parent window    
         NULL,       // Menu
@@ -67,12 +76,6 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
     ShowWindow(hwnd, nCmdShow);
     
 
-    //Get monitor dimensions
-    //if (!GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &monitorInfo)) {
-       // MessageBox(NULL, L"Failed to get monitor info.", L"Error", MB_ICONEXCLAMATION | MB_OK);
-       // return ERROR_MONITOR_NO_DESCRIPTOR;
-    //}
-
     // Run the message loop.
     MSG msg = { };
     while (GetMessage(&msg, NULL, 0, 0) > 0)
@@ -81,5 +84,5 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
         DispatchMessage(&msg);
     }
 
-    return 0;
+    return 1;
 }

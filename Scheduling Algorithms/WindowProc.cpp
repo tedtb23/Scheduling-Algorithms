@@ -38,11 +38,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     static HWND hwndTrackbar;
     static int minProcesses;
     static int maxProcesses;
-    constexpr LONG trackbarX = 350;
-    constexpr LONG trackbarY = 0;
-    constexpr UINT trackbarWidth = 400;
-    constexpr UINT trackbarHeight = 40;
-    constexpr RECT trackbarInvalidRegion = { trackbarX, trackbarY + trackbarHeight, trackbarX + trackbarWidth, trackbarY + trackbarHeight + 100};
+    constexpr LONG trackbarX = 0;
+    static LONG trackbarY;
+    constexpr LONG trackbarWidth = 200;
+    constexpr LONG trackbarHeight = 40;
+    RECT trackbarRect;
+    RECT trackbarInvalidRect;
     constexpr COLORREF bkTrkRGB = RGB(30, 30, 30);
     static HBRUSH hbrBkgnd = NULL;
     static int trackbarPos;
@@ -55,7 +56,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
         minProcesses = simInfoPtr->minProcesses;
         maxProcesses = simInfoPtr->maxProcesses;
-        trackbarPos = 10;
+        trackbarPos = minProcesses;
+        trackbarY = simInfoPtr->stats.size() * scrollAmount;
+        
 
         hwndTrackbar = createTrackBar(hwnd, NULL,
             trackbarX, //x
@@ -137,7 +140,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             }
             //invalidate the region below the trackbar 
             //which contains the display for the trackbar position.
-            InvalidateRect(hwnd, &trackbarInvalidRegion, true); 
+            GetWindowRect(hwndTrackbar, &trackbarRect);
+            MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
+            trackbarInvalidRect = 
+                {trackbarRect.right - 15,
+                trackbarRect.bottom,
+                trackbarRect.right + 25,
+                trackbarRect.bottom + 30};
+            InvalidateRect(hwnd, &trackbarInvalidRect, true); 
             UpdateWindow(hwnd);
         }
         break;

@@ -60,36 +60,80 @@ static void displayProcesses(
     }
 }
 
-static void displayGanttChart(const HDC& ctx, const std::vector<GanttNode>& ganttChart, const size_t startIdx, const size_t endIdx, RECT rect) {
+static long displayGanttChart(
+    const HDC& ctx, 
+    const std::string& algoUsed, 
+    const std::vector<GanttNode>& ganttChart, 
+    const RECT& rect) {
+
     SelectObject(ctx, GetStockObject(NULL_BRUSH)); //don't fill rects
-    constexpr int nodeWidth = 50;
+    constexpr int nodeWidth = 70;
     constexpr int nodeHeight = 50;
     long width = rect.right - rect.left;
     long height = rect.bottom - rect.top;
     long x = rect.left;
     long y = rect.top;
-    for (int i = startIdx; i <= endIdx; i++) {
+    size_t i;
+    TextOutA(ctx, x, y, algoUsed.c_str(), algoUsed.length());
+    y += 30;
+    for (i = 0; i < ganttChart.size(); i++) {
+
+        //if we have met or exceeded the bottom bound of rect, stop displaying nodes.
         if (y >= rect.bottom) break;
+
         const GanttNode& gNode = ganttChart[i];
         std::string pid = std::to_string(gNode.p.pid);
+        std::string startTime = std::to_string(gNode.startTime);
+        std::string endTime = std::to_string(gNode.endTime);
+
+        //display node with pid and starttime.
         Rectangle(ctx, x, y, x + nodeWidth, y + nodeHeight);
         TextOutA(ctx, ((x + nodeWidth) + x) / 2, ((y + nodeHeight) + y) / 2, pid.c_str(), pid.length());
+        TextOutA(ctx, x, y + nodeHeight, startTime.c_str(), startTime.length());
+
         x += nodeWidth;
-        if (x >= rect.right) {
+        //display endtime too if this is the last node.
+        if(i == ganttChart.size() - 1) TextOutA(ctx, x, y + nodeHeight, endTime.c_str(), endTime.length());
+
+        //if the next node will put us outside the right bound of rect. go to new line
+        if (x + nodeWidth > rect.right) {
+            //display endtime if this is the last node in a line.
+            TextOutA(ctx, x, y + nodeHeight, endTime.c_str(), endTime.length());
             x = rect.left;
-            y += nodeHeight;
+            y += nodeHeight + 30;
         }
     }
     DeleteObject(GetStockObject(NULL_BRUSH));
+    return y;
+}
+
+static void displayGanttCharts(
+    const HDC& ctx,
+    const std::vector<SchedStats>& stats,
+    RECT rect) {
+    long temp;
+    long y;
+
+    for (SchedStats stat : stats) {
+         y = displayGanttChart(
+            ctx,
+            stat.AlgoUsed,
+            stat.ganttChart,
+            rect);
+         y += 100;
+         if (y < rect.bottom) {
+             rect.top = y;
+         }
+         else break;
+    }
 }
 
 void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
-    constexpr int ganttOffset = 500;
     constexpr int offsetxAmount = 230;
     constexpr int offsetyAmount = 30;
     constexpr int prosTextHeight = (offsetyAmount * 4) + 10;
     constexpr int statTextHeight = prosTextHeight;
-    int xPos; //xScroll position
+    //int xPos; //xScroll position
     static int yPos; //yScroll position
     static int oldYPos;
     PAINTSTRUCT ps;
@@ -107,8 +151,8 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     if (!GetWindowRect(hwnd, &windowRect)) {
         MessageBox(NULL, L"Failed to get window bounds.", L"Error", MB_ICONEXCLAMATION | MB_OK);
     }
-    int width = windowRect.right - windowRect.left;
-    int height = windowRect.bottom - windowRect.top;
+    const int width = windowRect.right - windowRect.left;
+    const int height = windowRect.bottom - windowRect.top;
     ///
     
     //select in new font and color
@@ -131,41 +175,41 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     GetScrollInfo(hwnd, SB_VERT, &si);
     oldYPos = yPos;
     yPos = si.nPos;
-    GetScrollInfo(hwnd, SB_HORZ, &si);
-    xPos = si.nPos;
+    //GetScrollInfo(hwnd, SB_HORZ, &si);
+    //xPos = si.nPos;
     ///
-    
-    //paint stats in updated area
-    if (yPos < simInfo.stats.size() && yPos >= 0) {
-        displaySchedStats(ctx, simInfo.stats, yPos, bottom, 0, offsetyAmount);
-    }
-
-    for (SchedStats stat : simInfo.stats) {
-        displayGanttChart(ctx, stat.ganttChart, 0, stat.ganttChart.size() - 1, { 0, 400, 800, height });
-    }
     
     //display processes used text and trackbar pos
     if (yPos == 0) {
         std::string pTitle = "Processes Used : ";
         TextOutA(ctx, width - offsetxAmount - 180, 0, pTitle.c_str(), (int)pTitle.length());
-        hwndTrackbar = FindWindowEx(hwnd, NULL, TRACKBAR_CLASS, L"Track Bar"); //get handle to child trackbar window.
-        GetWindowRect(hwndTrackbar, &trackbarRect);
-        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
-        trackbarPos = (int) SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
-        std::string trackBarPosStr = "Process Amount : " + std::to_string(trackbarPos);
-        TextOutA(ctx, trackbarRect.left + 10, trackbarRect.bottom, trackBarPosStr.c_str(), (int)trackBarPosStr.length());
     }
+    hwndTrackbar = FindWindowEx(hwnd, NULL, TRACKBAR_CLASS, L"Track Bar"); //get handle to child trackbar window.
+    GetWindowRect(hwndTrackbar, &trackbarRect);
+    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
+    trackbarPos = (int)SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
+    std::string trackBarPosStr = "Process Amount : " + std::to_string(trackbarPos);
+    TextOutA(ctx, trackbarRect.left + 10, trackbarRect.bottom, trackBarPosStr.c_str(), (int)trackBarPosStr.length());
+
+    //display stats in updated area
+    if (yPos < simInfo.stats.size() && yPos >= 0) {
+        displaySchedStats(ctx, simInfo.stats, yPos, bottom, 0, offsetyAmount);
+    }
+
+    //display gantt charts
+    displayGanttCharts(ctx, simInfo.stats, {0, trackbarRect.top + 70, 600, height});
     
     //paint processes in updated area
-    if (oldYPos > yPos) { //scroll up
-        displayProcesses(ctx, simInfo.processes, bottom, yPos, simInfo.processes.size() - 1, width - offsetxAmount, top, offsetyAmount);
-    }
-    else if (oldYPos < yPos){ //scroll down
-        displayProcesses(ctx, simInfo.processes, bottom, (top / prosTextHeight) + yPos + 1, simInfo.processes.size() - 1, width - offsetxAmount, top, offsetyAmount);
-    }
-    else { //window occluded
-        displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
-    }
+    displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
+    //if (oldYPos > yPos) { //scroll up
+    //    displayProcesses(ctx, simInfo.processes, bottom, yPos, simInfo.processes.size() - 1, width - offsetxAmount, top, offsetyAmount);
+    //}
+    //else if (oldYPos < yPos){ //scroll down
+    //    displayProcesses(ctx, simInfo.processes, bottom, (top / prosTextHeight) + yPos, simInfo.processes.size() - 1, width - offsetxAmount, top, offsetyAmount);
+    //}
+    //else { //window occluded
+    //    displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
+    //}
     
     DeleteObject(hFont);
     EndPaint(hwnd, &ps);
