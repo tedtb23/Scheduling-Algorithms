@@ -24,7 +24,7 @@ SchedStats roundRobin(const std::vector<Process>& processes, int timeQuantum) {
 	while (true) {
 		//put processes that have reached their arrival time into the ready queue.
 		while (i < n && processes[i].arrivalTime <= clock) {
-			ready.push_back(processes[i]);
+			ready.insert(ready.begin(), processes[i]);
 			i++;
 		}
 
@@ -44,6 +44,7 @@ SchedStats roundRobin(const std::vector<Process>& processes, int timeQuantum) {
 				totalTurnAroundTime += endTime - pros.arrivalTime;
 				totalWaitTime += (endTime - pros.arrivalTime) - pros.totalBurst;
 			}
+			ganttChart.push_back({ pros, startTime, endTime });
 			clock = endTime;
 		}
 

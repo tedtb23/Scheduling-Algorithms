@@ -1,14 +1,17 @@
 #include "TrackBar.hpp"
 #include <Windows.h>
 #include <CommCtrl.h>
+#include <string>
 
 HWND WINAPI createTrackBar(
+    const std::string& trackbarTitle, //trackbar title text
     const HWND& parent, //parent window handle
     const HINSTANCE& hInstance, //process handle
     LONG x, //x coordinate to place the trackbar
     LONG y, //y coordinate to place the trackbar
     UINT width, //horizontal size of the trackbar
     UINT height, //vertical size of the trackbar
+    UINT iStart, //starting value of the trackbar
     UINT iMin,     // minimum value in trackbar range 
     UINT iMax,     // maximum value in trackbar range 
     UINT iSelMin,  // minimum value in trackbar selection 
@@ -16,16 +19,16 @@ HWND WINAPI createTrackBar(
 {
     HWND trackBar;
 
+    std::wstring stemp = std::wstring(trackbarTitle.begin(), trackbarTitle.end());
+    LPCWSTR trackbarTitleWide = stemp.c_str();
 
     if (!(trackBar = CreateWindowEx(
         0,                              // Optional window styles.
-        TRACKBAR_CLASS,                     // Window class
-        L"Track Bar",       // Window text
+        TRACKBAR_CLASS,                 // Window class
+        trackbarTitleWide,               // Window text
         WS_CHILD | TBS_ENABLESELRANGE | WS_VISIBLE, // Window style
-
         // Position and size
         x, y, width, height,
-
         parent,       // Parent window    
         NULL,       // Menu
         hInstance,  // Instance handle
@@ -49,10 +52,7 @@ HWND WINAPI createTrackBar(
 
     SendMessage(trackBar, TBM_SETPOS,
         (WPARAM)TRUE,                   // redraw flag 
-        (LPARAM)10); //set pos to starting simulation size
+        (LPARAM)iStart); //set pos to starting simulation size
 
-    //SetFocus(trackBar);
-
-    
     return trackBar;
 }

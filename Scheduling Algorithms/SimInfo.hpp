@@ -9,4 +9,6 @@ struct SimInfo {
 	std::vector<Process> processes;
 	int minProcesses;
 	int maxProcesses;
+	int minTQ;
+	int maxTQ;
 };

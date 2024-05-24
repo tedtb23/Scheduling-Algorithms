@@ -5,21 +5,22 @@
 #include "Render.hpp"
 #include <CommCtrl.h>
 
-static void displaySchedStat(const HDC& ctx, const SchedStats& stat, int offset, const int offsetyAmount) {
+static inline void displaySchedStat(const HDC& ctx, const SchedStats& stat, int offset, const int offsetyAmount) {
+    std::string algoStat = stat.AlgoUsed + " Stats : ";
     std::string avgWait = "Avg Wait: " + std::to_string(stat.avgWaitTime);
     std::string avgTurnAround = "Avg TurnAround: " + std::to_string(stat.avgTurnAroundTime);
-    //std::string avgBurst = "Avg Burst: " + std::to_string(stat.avgBurstTime);
+    std::string maxWait = "Max Wait: " + std::to_string(stat.maxWaitTime);
 
-    TextOutA(ctx, 0, offset, stat.AlgoUsed.c_str(), (int)stat.AlgoUsed.length());
+    TextOutA(ctx, 0, offset, algoStat.c_str(), (int)algoStat.length());
     offset += offsetyAmount;
     TextOutA(ctx, 0, offset, avgWait.c_str(), (int)avgWait.length());
     offset += offsetyAmount;
     TextOutA(ctx, 0, offset, avgTurnAround.c_str(), (int)avgTurnAround.length());
-    //offset += offsetyAmount;
-    //TextOutA(ctx, 0, offset, avgBurst.c_str(), (int)avgBurst.length());
+    offset += offsetyAmount;
+    TextOutA(ctx, 0, offset, maxWait.c_str(), (int)maxWait.length());
 }
 
-static void displaySchedStats(const HDC& ctx, const std::vector<SchedStats>& stats, const int startIdx, const int maxY, int offset, const int offsetyAmount) {
+static inline void displaySchedStats(const HDC& ctx, const std::vector<SchedStats>& stats, const int startIdx, const int maxY, int offset, const int offsetyAmount) {
     for (int i = startIdx; i < stats.size(); i++) {
         const SchedStats& stat = stats[i];
         if (offset >= maxY) break;
@@ -28,7 +29,7 @@ static void displaySchedStats(const HDC& ctx, const std::vector<SchedStats>& sta
     }
 }
 
-static void displayProcesses(
+static inline void displayProcesses(
     const HDC& ctx,
     const std::vector<Process>& processes,
     const long maxY,
@@ -38,7 +39,6 @@ static void displayProcesses(
 
     size_t currIdx = startIdx;
     long offset = startY;
-    //const int textHeight = (offsetyAmount * 4) + 10;
 
     while (currIdx <= endIdx && currIdx < processes.size()) {
         if (offset >= maxY) break;
@@ -60,7 +60,7 @@ static void displayProcesses(
     }
 }
 
-static long displayGanttChart(
+static inline long displayGanttChart(
     const HDC& ctx, 
     const std::string& algoUsed, 
     const std::vector<GanttNode>& ganttChart, 
@@ -74,7 +74,8 @@ static long displayGanttChart(
     long x = rect.left;
     long y = rect.top;
     size_t i;
-    TextOutA(ctx, x, y, algoUsed.c_str(), algoUsed.length());
+    std::string algoUsedGantt = algoUsed + " Gantt Chart : ";
+    TextOutA(ctx, x, y, algoUsedGantt.c_str(), (int)algoUsedGantt.length());
     y += 30;
     for (i = 0; i < ganttChart.size(); i++) {
 
@@ -88,17 +89,17 @@ static long displayGanttChart(
 
         //display node with pid and starttime.
         Rectangle(ctx, x, y, x + nodeWidth, y + nodeHeight);
-        TextOutA(ctx, ((x + nodeWidth) + x) / 2, ((y + nodeHeight) + y) / 2, pid.c_str(), pid.length());
-        TextOutA(ctx, x, y + nodeHeight, startTime.c_str(), startTime.length());
+        TextOutA(ctx, (nodeWidth / 4) + x, (nodeHeight / 4) + y, pid.c_str(), (int)pid.length());
+        TextOutA(ctx, x, y + nodeHeight, startTime.c_str(), (int)startTime.length());
 
         x += nodeWidth;
         //display endtime too if this is the last node.
-        if(i == ganttChart.size() - 1) TextOutA(ctx, x, y + nodeHeight, endTime.c_str(), endTime.length());
+        if(i == ganttChart.size() - 1) TextOutA(ctx, x, y + nodeHeight, endTime.c_str(), (int)endTime.length());
 
         //if the next node will put us outside the right bound of rect. go to new line
         if (x + nodeWidth > rect.right) {
             //display endtime if this is the last node in a line.
-            TextOutA(ctx, x, y + nodeHeight, endTime.c_str(), endTime.length());
+            TextOutA(ctx, x, y + nodeHeight, endTime.c_str(), (int)endTime.length());
             x = rect.left;
             y += nodeHeight + 30;
         }
@@ -107,11 +108,10 @@ static long displayGanttChart(
     return y;
 }
 
-static void displayGanttCharts(
+static inline void displayGanttCharts(
     const HDC& ctx,
     const std::vector<SchedStats>& stats,
     RECT rect) {
-    long temp;
     long y;
 
     for (SchedStats stat : stats) {
@@ -128,23 +128,37 @@ static void displayGanttCharts(
     }
 }
 
+static inline HWND getTrackbar(const HWND& hwnd, const std::string& trackbarTitle) {
+    std::wstring stemp = std::wstring(trackbarTitle.begin(), trackbarTitle.end());
+    LPCWSTR trackbarTitleWide = stemp.c_str();
+    return FindWindowEx(hwnd, NULL, TRACKBAR_CLASS, trackbarTitleWide); //get handle to child trackbar window.
+}
+
+static inline RECT getTrackbarRect(const HWND& hwnd, const std::string& trackbarTitle) {
+    RECT trackbarRect;
+    HWND hwndTrackbar = getTrackbar(hwnd, trackbarTitle);
+    GetWindowRect(hwndTrackbar, &trackbarRect);
+    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
+    return trackbarRect;
+}
+
+static inline void displayTrackbarPos(const HWND& hwnd, const HDC& ctx, const std::string& trackbarTitle, const std::string& posTitle) {
+    int pos;
+    HWND hwndTrackbar = getTrackbar(hwnd, trackbarTitle);
+    RECT trackbarRect = getTrackbarRect(hwnd, trackbarTitle);
+    pos = (int)SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
+    std::string trackBarPosStr = posTitle + std::to_string(pos);
+    TextOutA(ctx, trackbarRect.left + 5, trackbarRect.bottom, trackBarPosStr.c_str(), (int)trackBarPosStr.length());
+}
+
 void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     constexpr int offsetxAmount = 230;
     constexpr int offsetyAmount = 30;
-    constexpr int prosTextHeight = (offsetyAmount * 4) + 10;
-    constexpr int statTextHeight = prosTextHeight;
-    //int xPos; //xScroll position
     static int yPos; //yScroll position
     static int oldYPos;
     PAINTSTRUCT ps;
     SCROLLINFO si;
     HDC ctx = BeginPaint(hwnd, &ps);
-
-    //for trackbar
-    HWND hwndTrackbar;
-    RECT trackbarRect;
-    static int trackbarPos;
-    ///
 
     //get window bounds
     RECT windowRect;
@@ -175,8 +189,6 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     GetScrollInfo(hwnd, SB_VERT, &si);
     oldYPos = yPos;
     yPos = si.nPos;
-    //GetScrollInfo(hwnd, SB_HORZ, &si);
-    //xPos = si.nPos;
     ///
     
     //display processes used text and trackbar pos
@@ -184,12 +196,8 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
         std::string pTitle = "Processes Used : ";
         TextOutA(ctx, width - offsetxAmount - 180, 0, pTitle.c_str(), (int)pTitle.length());
     }
-    hwndTrackbar = FindWindowEx(hwnd, NULL, TRACKBAR_CLASS, L"Track Bar"); //get handle to child trackbar window.
-    GetWindowRect(hwndTrackbar, &trackbarRect);
-    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
-    trackbarPos = (int)SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
-    std::string trackBarPosStr = "Process Amount : " + std::to_string(trackbarPos);
-    TextOutA(ctx, trackbarRect.left + 10, trackbarRect.bottom, trackBarPosStr.c_str(), (int)trackBarPosStr.length());
+    displayTrackbarPos(hwnd, ctx, "Processes Trackbar", "Process Amount : ");
+    displayTrackbarPos(hwnd, ctx, "Time Quantum Trackbar", "RR Time Quantum : ");
 
     //display stats in updated area
     if (yPos < simInfo.stats.size() && yPos >= 0) {
@@ -197,19 +205,10 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     }
 
     //display gantt charts
-    displayGanttCharts(ctx, simInfo.stats, {0, trackbarRect.top + 70, 600, height});
+    displayGanttCharts(ctx, simInfo.stats, {0, getTrackbarRect(hwnd, "Time Quantum Trackbar").top + 70, 600, height});
     
     //paint processes in updated area
     displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
-    //if (oldYPos > yPos) { //scroll up
-    //    displayProcesses(ctx, simInfo.processes, bottom, yPos, simInfo.processes.size() - 1, width - offsetxAmount, top, offsetyAmount);
-    //}
-    //else if (oldYPos < yPos){ //scroll down
-    //    displayProcesses(ctx, simInfo.processes, bottom, (top / prosTextHeight) + yPos, simInfo.processes.size() - 1, width - offsetxAmount, top, offsetyAmount);
-    //}
-    //else { //window occluded
-    //    displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
-    //}
     
     DeleteObject(hFont);
     EndPaint(hwnd, &ps);

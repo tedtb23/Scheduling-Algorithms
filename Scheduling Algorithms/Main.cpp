@@ -9,24 +9,16 @@
 #include <stdexcept>
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int nCmdShow) {
-    MONITORINFO monitorInfo;
     SimInfo simInfo;
     try {
-        simInfo = simulate(10);
+        simInfo = simulate(10, 2);
     }
     catch (std::invalid_argument invalidArg) {
         MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
-        return 0;
+        return 1;
     }
 
    int height = GetSystemMetrics(SM_CYSCREEN);
-    //Get monitor dimensions
-    //if (!GetMonitorInfo(MonitorFromWindow(, MONITOR_DEFAULTTOPRIMARY), &monitorInfo)) {
-    //    MessageBox(NULL, L"Failed to get monitor info.", L"Error", MB_ICONEXCLAMATION | MB_OK);
-    //    return ERROR;
-    //}
-
-    
 
     // Register the window class.
     const wchar_t CLASS_NAME[] = L"SchedSimWindowClass";
@@ -84,5 +76,5 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
         DispatchMessage(&msg);
     }
 
-    return 1;
+    return 0;
 }

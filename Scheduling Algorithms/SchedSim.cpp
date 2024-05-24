@@ -50,21 +50,27 @@ static void printStats(std::vector<SchedStats>& stats, std::vector<Process>& pro
 	}
 }
 
-SimInfo simulate(int amount) {
+SimInfo simulate(int amount, int timeQuantum) {
 	constexpr int maxProcesses = 100;
 	constexpr int minProcesses = 10;
+	constexpr int maxTQ = 100;
+	constexpr int minTQ = 1;
 	if(amount > maxProcesses) throw std::invalid_argument("processes specified is greater than maximum");
-	if(amount <= 0) throw std::invalid_argument("processes specified is less than or equal to zero");
+	if(amount < minProcesses) throw std::invalid_argument("processes specified is less than minimum");
+	if (timeQuantum > maxTQ) throw std::invalid_argument("time quantum specified is greater than maximum");
+	if (timeQuantum < minTQ) throw std::invalid_argument("time quantum specified is less than minimum");
 	SimInfo simInfo;
 	simInfo.minProcesses = minProcesses;
 	simInfo.maxProcesses = maxProcesses;
+	simInfo.minTQ = minTQ;
+	simInfo.maxTQ = maxTQ;
 	std::vector<SchedStats>& stats = simInfo.stats;
 	std::vector<Process>& processes = simInfo.processes;
 
 	processes = generateProcesses(amount);
 	stats.push_back(fcfs(processes));
 	stats.push_back(sjf(processes));
-	stats.push_back(roundRobin(processes, 2));
+	stats.push_back(roundRobin(processes, timeQuantum));
 	//stats.push_back(priority(processesPtr));
 	//stats.push_back(multiLevelQueue(processesPtr));
 	//stats.push_back(multiLevelFeedbackQueue(processesPtr));

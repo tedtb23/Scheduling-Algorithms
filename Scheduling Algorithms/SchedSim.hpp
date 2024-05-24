@@ -1,4 +1,4 @@
 #pragma once
 #include "SimInfo.hpp"
 
-SimInfo simulate(int amount);
+SimInfo simulate(int amount, int timeQuantum);
