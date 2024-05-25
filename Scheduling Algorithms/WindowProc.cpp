@@ -17,7 +17,8 @@ static inline void setScrollBoundsAndPage(const HWND& hwnd, SCROLLINFO& si, int 
     si.fMask = SIF_RANGE | SIF_PAGE;
     si.nMin = 0;
     //maximum scroll depth should go to the last process or gantt node, whichever is greater.
-    si.nMax = max(trackbarPos - 2, (maxGanttNode / 12)); //maybe 12 works???
+    //si.nMax = max(trackbarPos - 2, (maxGanttNode / 10)); //maybe 12 works???
+    si.nMax = trackbarPos - 2;
     RECT r;
     GetClientRect(hwnd, &r);
     si.nPage = (r.bottom - r.top) / scrollAmount;
@@ -118,7 +119,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
         minTQ = simInfoPtr->minTQ;
         maxTQ = simInfoPtr->maxTQ;
-        trackbarTQPos = minTQ;
+        trackbarTQPos = 2; //2 is starting simulation value
         trackbarTQY = trackbarProsY + trackbarHeight + 30;
 
         hwndTrackbarPros = createTrackBar(

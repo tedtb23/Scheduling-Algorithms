@@ -69,8 +69,8 @@ static inline long displayGanttChart(
     SelectObject(ctx, GetStockObject(NULL_BRUSH)); //don't fill rects
     constexpr int nodeWidth = 70;
     constexpr int nodeHeight = 50;
-    long width = rect.right - rect.left;
-    long height = rect.bottom - rect.top;
+    const long width = rect.right - rect.left;
+    const long height = rect.bottom - rect.top;
     long x = rect.left;
     long y = rect.top;
     size_t i;
@@ -111,7 +111,7 @@ static inline long displayGanttChart(
 static inline void displayGanttCharts(
     const HDC& ctx,
     const std::vector<SchedStats>& stats,
-    RECT rect) {
+    RECT* rectPtr) {
     long y;
 
     for (SchedStats stat : stats) {
@@ -119,10 +119,10 @@ static inline void displayGanttCharts(
             ctx,
             stat.AlgoUsed,
             stat.ganttChart,
-            rect);
+            *rectPtr);
          y += 100;
-         if (y < rect.bottom) {
-             rect.top = y;
+         if (y < rectPtr->bottom) {
+             rectPtr->top = y;
          }
          else break;
     }
@@ -134,10 +134,12 @@ static inline HWND getTrackbar(const HWND& hwnd, const std::string& trackbarTitl
     return FindWindowEx(hwnd, NULL, TRACKBAR_CLASS, trackbarTitleWide); //get handle to child trackbar window.
 }
 
-static inline RECT getTrackbarRect(const HWND& hwnd, const std::string& trackbarTitle) {
+static RECT getTrackbarRect(const HWND& hwnd, const std::string& trackbarTitle) {
     RECT trackbarRect;
     HWND hwndTrackbar = getTrackbar(hwnd, trackbarTitle);
-    GetWindowRect(hwndTrackbar, &trackbarRect);
+    if (!GetWindowRect(hwndTrackbar, &trackbarRect)) {
+        MessageBox(NULL, L"Failed to get trackbar bounds.", L"Error", MB_ICONEXCLAMATION | MB_OK);
+    }
     MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&trackbarRect, 2);
     return trackbarRect;
 }
@@ -155,18 +157,23 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     constexpr int offsetxAmount = 230;
     constexpr int offsetyAmount = 30;
     static int yPos; //yScroll position
-    static int oldYPos;
+    //static int oldYPos;
     PAINTSTRUCT ps;
-    SCROLLINFO si;
+    SCROLLINFO si{};
     HDC ctx = BeginPaint(hwnd, &ps);
 
     //get window bounds
-    RECT windowRect;
-    if (!GetWindowRect(hwnd, &windowRect)) {
-        MessageBox(NULL, L"Failed to get window bounds.", L"Error", MB_ICONEXCLAMATION | MB_OK);
+    RECT clientRect;
+    if (!GetClientRect(hwnd, &clientRect)) {
+        MessageBox(NULL, L"Failed to get client bounds.", L"Error", MB_ICONEXCLAMATION | MB_OK);
     }
-    const int width = windowRect.right - windowRect.left;
-    const int height = windowRect.bottom - windowRect.top;
+    const int width = clientRect.right;
+    const int height = clientRect.bottom;
+    ///
+
+    //get gantt chart rect
+    long ganttTop = getTrackbarRect(hwnd, "Time Quantum Trackbar").bottom + 30;
+    RECT ganttRect = { 0, ganttTop, 600, height };
     ///
     
     //select in new font and color
@@ -187,7 +194,7 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     si.cbSize = sizeof(si);
     si.fMask = SIF_POS;
     GetScrollInfo(hwnd, SB_VERT, &si);
-    oldYPos = yPos;
+    //oldYPos = yPos;
     yPos = si.nPos;
     ///
     
@@ -205,7 +212,7 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     }
 
     //display gantt charts
-    displayGanttCharts(ctx, simInfo.stats, {0, getTrackbarRect(hwnd, "Time Quantum Trackbar").top + 70, 600, height});
+    displayGanttCharts(ctx, simInfo.stats, &ganttRect);
     
     //paint processes in updated area
     displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
