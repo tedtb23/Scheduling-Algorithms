@@ -5,8 +5,9 @@ https://github.com/tedtb23/Scheduling-Algorithms/assets/73807771/3a305cf4-6446-4
 
 ## Controls
 The **escape** key will close the application.\
-The **return** or **enter** key will display a new simulation with new random processes and the given parameters specifed by the trackbars.
-
+The **first trackbar** on the left will change the amount of processes used for the simulation.\
+The **second trackbar** on the left will change the time quantum for the round robin scheduling algorithm.\
+The **go button** will start a new simulation with the parameters specified by the trackbars and display the new statistics and Gantt charts.
 
 ## TODO
 * Add priority scheduling.
