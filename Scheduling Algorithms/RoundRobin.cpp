@@ -28,7 +28,6 @@ SchedStats roundRobin(const std::vector<Process>& processes, int timeQuantum) {
 			i++;
 		}
 
-		//finish me
 		if (ready.size()) {
 			pros = ready[0];
 			ready.erase(ready.begin());
@@ -40,9 +39,13 @@ SchedStats roundRobin(const std::vector<Process>& processes, int timeQuantum) {
 			}
 			else {
 				endTime = startTime + pros.remainingBurst;
+				size_t turnAroundTime = endTime - pros.arrivalTime;
+				size_t waitTime = turnAroundTime - pros.totalBurst;
 				pros.remainingBurst = 0;
-				totalTurnAroundTime += endTime - pros.arrivalTime;
-				totalWaitTime += (endTime - pros.arrivalTime) - pros.totalBurst;
+				totalTurnAroundTime += turnAroundTime;
+				totalWaitTime += waitTime;
+				if (waitTime >= maxWaitTime) maxWaitTime = waitTime;
+				if (turnAroundTime >= maxTurnAroundTime) maxTurnAroundTime = turnAroundTime;
 			}
 			ganttChart.push_back({ pros, startTime, endTime });
 			clock = endTime;
@@ -56,5 +59,5 @@ SchedStats roundRobin(const std::vector<Process>& processes, int timeQuantum) {
 		if (i < n && !ready.size() && clock < processes[i].arrivalTime) clock = processes[i].arrivalTime;
 
 	}
-	return { "Round Robin", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, std::move(ganttChart) };
+	return { "Round Robin", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, ganttChart };
 }

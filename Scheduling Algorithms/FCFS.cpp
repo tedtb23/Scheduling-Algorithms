@@ -30,10 +30,12 @@ SchedStats fcfs(const std::vector<Process>& processes) {
 			clock = endTime;
 		}
 		else { //execute this if the arrivalTime of the next process has not been met. wait time omitted since it is always zero here.
+			ganttChart.push_back({ pros, (size_t)pros.arrivalTime, (size_t)(pros.arrivalTime + pros.totalBurst) });
 			totalTurnAroundTime += pros.totalBurst;
 			clock = (pros.arrivalTime + pros.totalBurst);
+			
 		}
 	}
-	return {"FCFS", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, std::move(ganttChart)};
+	return {"FCFS", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, ganttChart};
 }
 

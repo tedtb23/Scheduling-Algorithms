@@ -58,5 +58,5 @@ SchedStats sjf(const std::vector<Process>& processes) {
 		if (i < n && !ready.size() && clock < processes[i].arrivalTime) clock = processes[i].arrivalTime;
 		
 	}
-	return { "SJF", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, std::move(ganttChart) };
+	return { "SJF", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, ganttChart };
 }
