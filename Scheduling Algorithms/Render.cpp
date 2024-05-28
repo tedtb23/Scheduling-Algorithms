@@ -3,13 +3,27 @@
 #include "Process.hpp"
 #include "SimInfo.hpp"
 #include "Render.hpp"
+#include <sstream>
 #include <CommCtrl.h>
+#include <iomanip>
 
 static inline void displaySchedStat(const HDC& ctx, const SchedStats& stat, int offset, const int offsetyAmount) {
     std::string algoStat = stat.AlgoUsed + " Stats : ";
-    std::string avgWait = "Avg Wait: " + std::to_string(stat.avgWaitTime);
-    std::string avgTurnAround = "Avg TurnAround: " + std::to_string(stat.avgTurnAroundTime);
-    std::string maxWait = "Max Wait: " + std::to_string(stat.maxWaitTime);
+
+    std::stringstream avgWaitStream;
+    avgWaitStream << std::fixed << std::setprecision(2) << stat.avgWaitTime;
+    std::string avgWaitStrVal = avgWaitStream.str();
+    std::string avgWait = "Avg Wait: " + avgWaitStrVal;
+
+    std::stringstream avgTurnAroundStream;
+    avgTurnAroundStream << std::fixed << std::setprecision(2) << stat.avgTurnAroundTime;
+    std::string avgTurnAroundStrVal = avgTurnAroundStream.str();
+    std::string avgTurnAround = "Avg TurnAround: " + avgTurnAroundStrVal;
+
+    std::stringstream maxWaitStream;
+    maxWaitStream << std::fixed << std::setprecision(2) << stat.maxWaitTime;
+    std::string maxWaitStrVal = maxWaitStream.str();
+    std::string maxWait = "Max Wait: " + maxWaitStrVal;
 
     TextOutA(ctx, 0, offset, algoStat.c_str(), (int)algoStat.length());
     offset += offsetyAmount;
@@ -172,7 +186,7 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     ///
 
     //get gantt chart rect
-    long ganttTop = getTrackbarRect(hwnd, "Time Quantum Trackbar").bottom + 30;
+     const long ganttTop = getTrackbarRect(hwnd, "Time Quantum Trackbar").bottom + 30;
     RECT ganttRect = { 0, ganttTop, 600, height };
     ///
     

@@ -18,7 +18,8 @@ static inline void setScrollBoundsAndPage(const HWND& hwnd, SCROLLINFO& si, int 
     si.nMin = 0;
     //maximum scroll depth should go to the last process or gantt node, whichever is greater.
     //si.nMax = max(trackbarPos - 2, (maxGanttNode / 10)); //maybe 12 works???
-    si.nMax = trackbarPos - 2;
+    //si.nMax = trackbarPos - 2;
+    si.nMax = 1000;
     RECT r;
     GetClientRect(hwnd, &r);
     si.nPage = (r.bottom - r.top) / scrollAmount;
@@ -81,12 +82,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     ///
 
     //for trackbars
-    HWND hwndControl;
+    HWND hwndTrckControl;
     constexpr long trackbarX = 0;
     constexpr long trackbarWidth = 200;
     constexpr long trackbarHeight = 40;
     constexpr COLORREF bkTrkRGB = RGB(30, 30, 30);
-    static HBRUSH hbrBkgnd = NULL;
+    static HBRUSH trackbarHBrush = NULL;
     ///
     //for process amount trackbar
     static HWND hwndTrackbarPros;
@@ -107,6 +108,16 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     static int trackbarTQPos;
     ///
 
+    //for go button
+    HWND hwndBtnControl;
+    static HWND hwndGoBtn;
+    constexpr long btnWidth = 30;
+    constexpr long btnHeight = 30;
+    constexpr long btnX = trackbarWidth;
+    static long btnY;
+    static HBRUSH btnHBrush = NULL;
+    ///
+
     if (uMsg == WM_CREATE) {
         CREATESTRUCT* pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
         simInfoPtr = reinterpret_cast<SimInfo*>(pCreate->lpCreateParams);
@@ -121,6 +132,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         maxTQ = simInfoPtr->maxTQ;
         trackbarTQPos = 2; //2 is starting simulation value
         trackbarTQY = trackbarProsY + trackbarHeight + 30;
+
+        btnY = trackbarTQY;
 
         hwndTrackbarPros = createTrackBar(
             "Processes Trackbar", //window title
@@ -151,6 +164,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             maxTQ); //max value in selection
 
 
+        hwndGoBtn = CreateWindow(
+            L"BUTTON", //class
+            L"GO", //Button text
+            WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
+            btnX,         // x position 
+            btnY,         // y position 
+            btnWidth,        // Button width
+            btnHeight,        // Button height
+            hwnd,     // Parent window
+            NULL,       // No menu.
+            NULL, //hinstance
+            NULL);      // Pointer not needed.
+
+
         for (SchedStats stat : simInfoPtr->stats) {
             if (stat.ganttChart.size() > maxGanttNode) {
                 maxGanttNode = (int)stat.ganttChart.size();
@@ -166,7 +193,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
     switch (uMsg) {
     case WM_DESTROY: {
-        DeleteObject(hbrBkgnd);
+        DeleteObject(btnHBrush);
+        DeleteObject(trackbarHBrush);
         PostQuitMessage(0);
         break;
     }
@@ -174,44 +202,66 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         UpdateSimStats(hwnd, *simInfoPtr);
         break;
     }
-    case WM_CHAR: {
-        if (wParam == VK_RETURN) {
-            try {
-                *simInfoPtr = simulate(trackbarProsPos, trackbarTQPos);
-                SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)simInfoPtr);
-                InvalidateRect(hwnd, NULL, true);
-                UpdateWindow(hwnd);
-                for (SchedStats stat : simInfoPtr->stats) {
-                    if (stat.ganttChart.size() > maxGanttNode) {
-                        maxGanttNode = (int)stat.ganttChart.size();
+    case WM_COMMAND: {
+        hwndBtnControl = (HWND)lParam;
+
+        if (hwndGoBtn == hwndBtnControl) {
+            SetFocus(hwnd); //prevent button from keeping focus
+            switch (HIWORD(wParam)) {
+                case BN_CLICKED: {
+                    try {
+                        *simInfoPtr = simulate(trackbarProsPos, trackbarTQPos);
+                        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)simInfoPtr);
+                        InvalidateRect(hwnd, NULL, true);
+                        UpdateWindow(hwnd);
+                        for (SchedStats stat : simInfoPtr->stats) {
+                            if (stat.ganttChart.size() > maxGanttNode) {
+                                maxGanttNode = (int)stat.ganttChart.size();
+                            }
+                        }
+                        setScrollBoundsAndPage(hwnd, si, trackbarProsPos, maxGanttNode, scrollAmount);
                     }
+                    catch (std::invalid_argument invalidArg) {
+                        MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
+                        result = 1;
+                    }
+                    break;
                 }
-                setScrollBoundsAndPage(hwnd, si, trackbarProsPos, maxGanttNode, scrollAmount);
-            }
-            catch (std::invalid_argument invalidArg) {
-                MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
-                result = 1;
             }
         }
+        break;
+    }
+    case WM_CHAR: {
         if (wParam == VK_ESCAPE) SendMessage(hwnd, WM_DESTROY, NULL, NULL);
+        break;
+    }
+    case WM_CTLCOLORBTN: {
+        HDC hdcStatic = (HDC)wParam;
+        SetBkMode(hdcStatic, TRANSPARENT);
+
+        if (btnHBrush == NULL)
+        {
+            btnHBrush = CreateSolidBrush(bkTrkRGB);
+        }
+        result = (INT_PTR)btnHBrush;
         break;
     }
     case WM_CTLCOLORSTATIC: {
         HDC hdcStatic = (HDC)wParam;
         SetBkMode(hdcStatic, TRANSPARENT);
 
-        if (hbrBkgnd == NULL)
+        if (trackbarHBrush == NULL)
         {
-            hbrBkgnd = CreateSolidBrush(bkTrkRGB);
+            trackbarHBrush = CreateSolidBrush(bkTrkRGB);
         }
-        result = (INT_PTR)hbrBkgnd;
+        result = (INT_PTR)trackbarHBrush;
         break;
     }
     case WM_HSCROLL:
     {
-        hwndControl = (HWND)lParam;
+        hwndTrckControl = (HWND)lParam;
 
-        if (hwndTrackbarPros == hwndControl) //if control responsible for hscroll is the process trackbar.
+        if (hwndTrackbarPros == hwndTrckControl) //if control responsible for hscroll is the process trackbar.
         {
             handleTrackbarMove(
                 hwnd,
@@ -224,7 +274,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 &trackbarProsInvalidRect);
             trackbarProsPos = (int)SendMessage(hwndTrackbarPros, TBM_GETPOS, 0, 0);
         }
-        else if (hwndTrackbarTQ == hwndControl) {
+        else if (hwndTrackbarTQ == hwndTrckControl) {
             handleTrackbarMove(
                 hwnd,
                 wParam,
