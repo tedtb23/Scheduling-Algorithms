@@ -233,17 +233,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
         if (wParam == VK_ESCAPE) SendMessage(hwnd, WM_DESTROY, NULL, NULL);
         break;
     }
-    case WM_CTLCOLORBTN: {
-        HDC hdcStatic = (HDC)wParam;
-        SetBkMode(hdcStatic, TRANSPARENT);
-
-        if (btnHBrush == NULL)
-        {
-            btnHBrush = CreateSolidBrush(bkTrkRGB);
-        }
-        result = (INT_PTR)btnHBrush;
-        break;
-    }
     case WM_CTLCOLORSTATIC: {
         HDC hdcStatic = (HDC)wParam;
         SetBkMode(hdcStatic, TRANSPARENT);
