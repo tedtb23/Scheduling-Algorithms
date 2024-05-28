@@ -1,7 +1,7 @@
 Simulates different CPU scheduling algorithms with randomly generated processes using WinAPI for the GUI.\
 Prebuilt executable is provided in root directory.
 
-![A gif showing the Scheduling Algorithms application](https://giphy.com/gifs/SlCvuxrBF1FdSaXrrr/giphy.gif)
+![Scheduling Algorithms](https://github.com/tedtb23/Scheduling-Algorithms/assets/73807771/8ec3e392-79e9-473e-98d9-9410f7e88315)
 
 ## Controls
 The **escape** key will close the application.\
