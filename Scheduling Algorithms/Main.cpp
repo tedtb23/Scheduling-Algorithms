@@ -1,11 +1,7 @@
 #include "WindowProc.hpp"
-#include "Render.hpp"
+#include "SimInfo.hpp"
 #include "SchedSim.hpp"
-#include "SchedStats.hpp"
 #include <Windows.h>
-#include <vector>
-#include <string>
-#include <memory>
 #include <stdexcept>
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int nCmdShow) {
@@ -59,8 +55,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
         NULL,       // Menu
         hInstance,  // Instance handle
         &simInfo    // Pass simulation data to window
-    )))
-    {
+    ))) {
         MessageBox(NULL, L"Failed to create window.", L"Error", MB_ICONEXCLAMATION | MB_OK);
         return GetLastError();
     }
@@ -70,8 +65,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hInstPrev, PSTR cmdline, int
 
     // Run the message loop.
     MSG msg = { };
-    while (GetMessage(&msg, NULL, 0, 0) > 0)
-    {
+    while (GetMessage(&msg, NULL, 0, 0) > 0) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }

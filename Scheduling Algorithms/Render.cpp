@@ -47,14 +47,14 @@ static inline void displayProcesses(
     const HDC& ctx,
     const std::vector<Process>& processes,
     const long maxY,
-    const size_t startIdx, const size_t endIdx, 
+    const size_t startIdx,
     const long startX, const long startY, 
     const int offsetyAmount) {
 
     size_t currIdx = startIdx;
     long offset = startY;
 
-    while (currIdx <= endIdx && currIdx < processes.size()) {
+    while (currIdx < processes.size()) {
         if (offset >= maxY) break;
         const Process& p = processes[currIdx];
         std::string pid = "PID: " + std::to_string(p.pid);
@@ -186,18 +186,17 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     ///
 
     //get gantt chart rect
-     const long ganttTop = getTrackbarRect(hwnd, "Time Quantum Trackbar").bottom + 30;
+    const long ganttTop = getTrackbarRect(hwnd, "Time Quantum Trackbar").bottom + 30;
     RECT ganttRect = { 0, ganttTop, 600, height };
     ///
     
     //select in new font and color
-    constexpr COLORREF textRGB = RGB(255, 255, 255);
-    constexpr COLORREF bkRGB = RGB(30, 30, 30);
+    constexpr COLORREF textRGB = RGB(255, 255, 255); //white
+    constexpr COLORREF bkRGB = RGB(30, 30, 30); //grey
     const COLORREF oldBKColor = SetBkColor(ctx, bkRGB);
     const COLORREF oldTextColor = SetTextColor(ctx, textRGB);
-    HFONT hFont, hOldFont;
-    hFont = CreateFontA(25, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, "Arial");
-    hOldFont = (HFONT)SelectObject(ctx, hFont);
+    const HFONT hFont = CreateFontA(25, 0, 0, 0, FW_DONTCARE, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, "Arial");
+    const HFONT hOldFont = (HFONT)SelectObject(ctx, hFont);
     ///
 
     //get update region and scroll info
@@ -229,7 +228,7 @@ void UpdateSimStats(const HWND& hwnd, const SimInfo& simInfo) {
     displayGanttCharts(ctx, simInfo.stats, &ganttRect);
     
     //paint processes in updated area
-    displayProcesses(ctx, simInfo.processes, height, yPos, simInfo.processes.size() - 1, width - offsetxAmount, 0, offsetyAmount);
+    displayProcesses(ctx, simInfo.processes, height, yPos, width - offsetxAmount, 0, offsetyAmount);
     
     DeleteObject(hFont);
     EndPaint(hwnd, &ps);

@@ -33,9 +33,6 @@
     <ClCompile Include="RoundRobin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SimInfo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="WindowProc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

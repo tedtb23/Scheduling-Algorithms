@@ -9,17 +9,17 @@ SchedStats sjf(const std::vector<Process>& processes) {
 	Process pros; //currently "executing" process.
 	size_t i = 0;
 	size_t n = processes.size();
-	size_t startTime;
-	size_t endTime;
-	size_t waitTime;
-	size_t turnAroundTime;
-	int minBurstTime = LONG_MAX;
-	size_t clock = 0;
 	size_t totalWaitTime = 0;
 	size_t totalTurnAroundTime = 0;
-	size_t maxWaitTime = 0;
-	size_t maxTurnAroundTime = 0;
-
+	long startTime;
+	long endTime;
+	long waitTime;
+	long turnAroundTime;
+	long clock = 0;
+	long maxWaitTime = 0;
+	long maxTurnAroundTime = 0;
+	int minBurstTime = INT_MAX;
+	
 	if(i < n) clock = processes[i].arrivalTime;
 	while (true) {
 		//put processes that have reached their arrival time into the ready queue.

@@ -135,7 +135,6 @@
     <ClCompile Include="SchedStats.hpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Process.hpp" />
-    <ClCompile Include="SimInfo.cpp" />
     <ClCompile Include="SJF.cpp" />
     <ClCompile Include="TrackBar.cpp" />
     <ClCompile Include="WindowProc.cpp" />

@@ -3,6 +3,6 @@
 
 struct GanttNode {
 	Process p;
-	size_t startTime;
-	size_t endTime;
+	long startTime;
+	long endTime;
 };

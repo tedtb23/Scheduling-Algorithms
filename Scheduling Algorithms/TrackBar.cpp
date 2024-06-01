@@ -33,8 +33,7 @@ HWND WINAPI createTrackBar(
         NULL,       // Menu
         hInstance,  // Instance handle
         NULL
-    )))
-    {
+    ))) {
         MessageBox(NULL, L"Failed to create track bar.", L"Error", MB_ICONEXCLAMATION | MB_OK);
         return NULL;
     }

@@ -7,20 +7,24 @@
 SchedStats fcfs(const std::vector<Process>& processes) {
 	std::vector<GanttNode> ganttChart;
 	size_t n = processes.size();
-	size_t clock = 0;
 	size_t totalWaitTime = 0;
 	size_t totalTurnAroundTime = 0;
-	size_t maxWaitTime = 0;
-	size_t maxTurnAroundTime = 0;
+	long clock = 0;
+	long maxWaitTime = 0;
+	long maxTurnAroundTime = 0;
+	long startTime;
+	long endTime;
+	long waitTime;
+	long turnAroundTime;
 
 	for (size_t i = 0; i < n; i++) {
 		const Process& pros = processes[i];
 
 		if (clock >= pros.arrivalTime) {
-			size_t startTime = clock;
-			size_t endTime = startTime + pros.totalBurst;
-			size_t waitTime = startTime - pros.arrivalTime;
-			size_t turnAroundTime = endTime - pros.arrivalTime;
+			startTime = clock;
+			endTime = startTime + pros.totalBurst;
+			waitTime = startTime - pros.arrivalTime;
+			turnAroundTime = endTime - pros.arrivalTime;
 
 			if (waitTime >= maxWaitTime) maxWaitTime = waitTime;
 			if (turnAroundTime >= maxTurnAroundTime) maxTurnAroundTime = turnAroundTime;
@@ -30,10 +34,9 @@ SchedStats fcfs(const std::vector<Process>& processes) {
 			clock = endTime;
 		}
 		else { //execute this if the arrivalTime of the next process has not been met. wait time omitted since it is always zero here.
-			ganttChart.push_back({ pros, (size_t)pros.arrivalTime, (size_t)(pros.arrivalTime + pros.totalBurst) });
+			ganttChart.push_back({ pros, pros.arrivalTime, (pros.arrivalTime + pros.totalBurst) });
 			totalTurnAroundTime += pros.totalBurst;
 			clock = (pros.arrivalTime + pros.totalBurst);
-			
 		}
 	}
 	return {"FCFS", (totalWaitTime / (double)n), (totalTurnAroundTime / (double)n), maxWaitTime, maxTurnAroundTime, ganttChart};

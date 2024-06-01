@@ -38,24 +38,24 @@ static inline void handleTrackbarMove(
 
     SetFocus(hwnd); //prevent trackbar from keeping focus
     switch (LOWORD(wParam)) {
+        case TB_ENDTRACK: {
+            pos = (int)SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
 
-    case TB_ENDTRACK:
+            if (pos > max) {
+                SendMessage(hwndTrackbar, TBM_SETPOS,
+                    (WPARAM)TRUE,       // redraw flag 
+                    (LPARAM)max);
+            }
+            else if (pos < min) {
+                SendMessage(hwndTrackbar, TBM_SETPOS,
+                    (WPARAM)TRUE,       // redraw flag 
+                    (LPARAM)min);
+            }
+            break;
+        }
 
-        pos = (int)SendMessage(hwndTrackbar, TBM_GETPOS, 0, 0);
-
-        if (pos > max)
-            SendMessage(hwndTrackbar, TBM_SETPOS,
-                (WPARAM)TRUE,       // redraw flag 
-                (LPARAM)max);
-
-        else if (pos < min)
-            SendMessage(hwndTrackbar, TBM_SETPOS,
-                (WPARAM)TRUE,       // redraw flag 
-                (LPARAM)min);
-        break;
-
-    default:
-        break;
+        default:
+            break;
     }
     //invalidate the region below the trackbar
     //which contains the display for the trackbar position.
@@ -191,184 +191,178 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
     }
 
     switch (uMsg) {
-    case WM_DESTROY: {
-        DeleteObject(trackbarHBrush);
-        PostQuitMessage(0);
-        break;
-    }
-    case WM_PAINT: {
-        UpdateSimStats(hwnd, *simInfoPtr);
-        break;
-    }
-    case WM_COMMAND: {
-        hwndBtnControl = (HWND)lParam;
+        case WM_DESTROY: {
+            DeleteObject(trackbarHBrush);
+            PostQuitMessage(0);
+            break;
+        }
+        case WM_PAINT: {
+            UpdateSimStats(hwnd, *simInfoPtr);
+            break;
+        }
+        case WM_COMMAND: {
+            hwndBtnControl = (HWND)lParam;
 
-        if (hwndGoBtn == hwndBtnControl) { //command received from go button
-            SetFocus(hwnd); //prevent button from keeping focus
-            switch (HIWORD(wParam)) {
-                case BN_CLICKED: {
-                    try {
-                        *simInfoPtr = simulate(trackbarProsPos, trackbarTQPos);
-                        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)simInfoPtr);
-                        InvalidateRect(hwnd, NULL, true);
-                        UpdateWindow(hwnd);
-                        for (SchedStats stat : simInfoPtr->stats) {
-                            if (stat.ganttChart.size() > maxGanttNode) {
-                                maxGanttNode = (int)stat.ganttChart.size();
+            if (hwndGoBtn == hwndBtnControl) { //command received from go button
+                SetFocus(hwnd); //prevent button from keeping focus
+                switch (HIWORD(wParam)) {
+                    case BN_CLICKED: {
+                        try {
+                            *simInfoPtr = simulate(trackbarProsPos, trackbarTQPos);
+                            SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)simInfoPtr);
+                            InvalidateRect(hwnd, NULL, true);
+                            UpdateWindow(hwnd);
+                            for (SchedStats stat : simInfoPtr->stats) {
+                                if (stat.ganttChart.size() > maxGanttNode) {
+                                    maxGanttNode = (int)stat.ganttChart.size();
+                                }
                             }
+                            setScrollBoundsAndPage(hwnd, si, trackbarProsPos, maxGanttNode, scrollAmount);
                         }
-                        setScrollBoundsAndPage(hwnd, si, trackbarProsPos, maxGanttNode, scrollAmount);
+                        catch (std::invalid_argument invalidArg) {
+                            MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
+                            result = 1;
+                        }
+                        break;
                     }
-                    catch (std::invalid_argument invalidArg) {
-                        MessageBoxA(NULL, invalidArg.what(), "Error", MB_ICONEXCLAMATION | MB_OK);
-                        result = 1;
-                    }
-                    break;
                 }
             }
-        }
-        break;
-    }
-    case WM_CHAR: {
-        if (wParam == VK_ESCAPE) SendMessage(hwnd, WM_DESTROY, NULL, NULL);
-        break;
-    }
-    case WM_CTLCOLORSTATIC: {
-        HDC hdcStatic = (HDC)wParam;
-        SetBkMode(hdcStatic, TRANSPARENT);
-
-        if (trackbarHBrush == NULL)
-        {
-            trackbarHBrush = CreateSolidBrush(bkTrkRGB);
-        }
-        result = (INT_PTR)trackbarHBrush;
-        break;
-    }
-    case WM_HSCROLL:
-    {
-        hwndTrckControl = (HWND)lParam;
-
-        if (hwndTrackbarPros == hwndTrckControl) //if control responsible for hscroll is the process trackbar.
-        {
-            handleTrackbarMove(
-                hwnd,
-                wParam,
-                hwndTrackbarPros,
-                trackbarProsPos,
-                minProcesses,
-                maxProcesses,
-                &trackbarProsRect,
-                &trackbarProsInvalidRect);
-            trackbarProsPos = (int)SendMessage(hwndTrackbarPros, TBM_GETPOS, 0, 0);
-        }
-        else if (hwndTrackbarTQ == hwndTrckControl) {
-            handleTrackbarMove(
-                hwnd,
-                wParam,
-                hwndTrackbarTQ,
-                trackbarTQPos,
-                minTQ,
-                maxTQ,
-                &trackbarTQRect,
-                &trackbarTQInvalidRect);
-            trackbarTQPos = (int)SendMessage(hwndTrackbarTQ, TBM_GETPOS, 0, 0);
-        }
-        break;
-    }
-    case WM_VSCROLL: {
-        // Get all the vertial scroll bar information.
-        si.cbSize = sizeof(si);
-        si.fMask = SIF_ALL;
-        GetScrollInfo(hwnd, SB_VERT, &si);
-
-        // Save the position for comparison later on.
-        yPos = si.nPos;
-        switch (LOWORD(wParam))
-        {
-
-            // User clicked the HOME keyboard key.
-        case SB_TOP:
-            si.nPos = si.nMin;
-            break;
-
-            // User clicked the END keyboard key.
-        case SB_BOTTOM:
-            si.nPos = si.nMax;
-            break;
-
-            // User clicked the top arrow.
-        case SB_LINEUP:
-            si.nPos -= 1;
-            break;
-
-            // User clicked the bottom arrow.
-        case SB_LINEDOWN:
-            si.nPos += 1;
-            break;
-
-            // User clicked the scroll bar shaft above the scroll box.
-        case SB_PAGEUP:
-            si.nPos -= si.nPage;
-            break;
-
-            // User clicked the scroll bar shaft below the scroll box.
-        case SB_PAGEDOWN:
-            si.nPos += si.nPage;
-            break;
-
-            // User dragged the scroll box.
-        case SB_THUMBTRACK:
-            si.nPos = si.nTrackPos;
-            break;
-
-        default:
             break;
         }
-
-        // Set the position and then retrieve it.  Due to adjustments
-        // by Windows it may not be the same as the value set.
-        si.fMask = SIF_POS;
-        SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-        GetScrollInfo(hwnd, SB_VERT, &si);
-
-        // If the position has changed, scroll window and update it.
-        if (si.nPos != yPos)
-        {
-            ScrollWindow(hwnd, 0, scrollAmount * (yPos - si.nPos), NULL, NULL);
-            UpdateWindow(hwnd);
+        case WM_CHAR: {
+            if (wParam == VK_ESCAPE) SendMessage(hwnd, WM_DESTROY, NULL, NULL);
+            break;
         }
-        break;
-    }
-    case WM_MOUSEWHEEL: {
-        #define DELTA_SCROLL 120;
-        int zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
-        si.cbSize = sizeof(si);
-        si.fMask = SIF_ALL;
-        GetScrollInfo(hwnd, SB_VERT, &si);
+        case WM_CTLCOLORSTATIC: {
+            HDC hdcStatic = (HDC)wParam;
+            SetBkMode(hdcStatic, TRANSPARENT);
 
-        // Save the position for comparison later on.
-        yPos = si.nPos;
-
-        si.nPos += -zDelta / DELTA_SCROLL;
-        if (si.nPos < 0) si.nPos = 0;
-
-        // Set the position and then retrieve it.  Due to adjustments
-        // by Windows it may not be the same as the value set.
-        si.fMask = SIF_POS;
-        SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-        GetScrollInfo(hwnd, SB_VERT, &si);
-
-        // If the position has changed, scroll window and update it.
-        if (si.nPos != yPos)
-        {
-            ScrollWindow(hwnd, 0, scrollAmount * (yPos - si.nPos), NULL, NULL);
-            UpdateWindow(hwnd);
+            if (trackbarHBrush == NULL) {
+                trackbarHBrush = CreateSolidBrush(bkTrkRGB);
+            }
+            result = (INT_PTR)trackbarHBrush;
+            break;
         }
-        break;
-    }
-    default: {
-        result = DefWindowProc(hwnd, uMsg, wParam, lParam);
-    }
+        case WM_HSCROLL: {
+            hwndTrckControl = (HWND)lParam;
+
+            if (hwndTrackbarPros == hwndTrckControl) {
+                handleTrackbarMove(
+                    hwnd,
+                    wParam,
+                    hwndTrackbarPros,
+                    trackbarProsPos,
+                    minProcesses,
+                    maxProcesses,
+                    &trackbarProsRect,
+                    &trackbarProsInvalidRect);
+                trackbarProsPos = (int)SendMessage(hwndTrackbarPros, TBM_GETPOS, 0, 0);
+            }
+            else if (hwndTrackbarTQ == hwndTrckControl) {
+                handleTrackbarMove(
+                    hwnd,
+                    wParam,
+                    hwndTrackbarTQ,
+                    trackbarTQPos,
+                    minTQ,
+                    maxTQ,
+                    &trackbarTQRect,
+                    &trackbarTQInvalidRect);
+                trackbarTQPos = (int)SendMessage(hwndTrackbarTQ, TBM_GETPOS, 0, 0);
+            }
+            break;
+        }
+        case WM_VSCROLL: {
+            // Get all the vertial scroll bar information.
+            si.cbSize = sizeof(si);
+            si.fMask = SIF_ALL;
+            GetScrollInfo(hwnd, SB_VERT, &si);
+
+            // Save the position for comparison later on.
+            yPos = si.nPos;
+            switch (LOWORD(wParam)) {
+
+                // User clicked the HOME keyboard key.
+            case SB_TOP:
+                si.nPos = si.nMin;
+                break;
+
+                // User clicked the END keyboard key.
+            case SB_BOTTOM:
+                si.nPos = si.nMax;
+                break;
+
+                // User clicked the top arrow.
+            case SB_LINEUP:
+                si.nPos -= 1;
+                break;
+
+                // User clicked the bottom arrow.
+            case SB_LINEDOWN:
+                si.nPos += 1;
+                break;
+
+                // User clicked the scroll bar shaft above the scroll box.
+            case SB_PAGEUP:
+                si.nPos -= si.nPage;
+                break;
+
+                // User clicked the scroll bar shaft below the scroll box.
+            case SB_PAGEDOWN:
+                si.nPos += si.nPage;
+                break;
+
+                // User dragged the scroll box.
+            case SB_THUMBTRACK:
+                si.nPos = si.nTrackPos;
+                break;
+
+            default:
+                break;
+            }
+
+            // Set the position and then retrieve it.  Due to adjustments
+            // by Windows it may not be the same as the value set.
+            si.fMask = SIF_POS;
+            SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+            GetScrollInfo(hwnd, SB_VERT, &si);
+
+            // If the position has changed, scroll window and update it.
+            if (si.nPos != yPos) {
+                ScrollWindow(hwnd, 0, scrollAmount * (yPos - si.nPos), NULL, NULL);
+                UpdateWindow(hwnd);
+            }
+            break;
+        }
+        case WM_MOUSEWHEEL: {
+            constexpr int DELTA_SCROLL = 120;
+            int zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+            si.cbSize = sizeof(si);
+            si.fMask = SIF_ALL;
+            GetScrollInfo(hwnd, SB_VERT, &si);
+
+            // Save the position for comparison later on.
+            yPos = si.nPos;
+
+            si.nPos += -zDelta / DELTA_SCROLL;
+            if (si.nPos < 0) si.nPos = 0;
+
+            // Set the position and then retrieve it.  Due to adjustments
+            // by Windows it may not be the same as the value set.
+            si.fMask = SIF_POS;
+            SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+            GetScrollInfo(hwnd, SB_VERT, &si);
+
+            // If the position has changed, scroll window and update it.
+            if (si.nPos != yPos) {
+                ScrollWindow(hwnd, 0, scrollAmount * (yPos - si.nPos), NULL, NULL);
+                UpdateWindow(hwnd);
+            }
+            break;
+        }
+        default: {
+            result = DefWindowProc(hwnd, uMsg, wParam, lParam);
+        }
     }
     return result;
 }

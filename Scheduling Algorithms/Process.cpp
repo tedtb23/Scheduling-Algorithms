@@ -1,5 +1,4 @@
 #include "Process.hpp"
-#include <iostream>
 #include <chrono>
 #include <random>
 #include <algorithm>
