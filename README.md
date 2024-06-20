@@ -12,4 +12,3 @@ The **go button** will start a new simulation with the parameters specified by t
 ## TODO
 * Add priority scheduling.
 * Add shortest time remaining first scheduling.
-* Fix issue with maximum scroll being set to the appropriate length. For now it is set to a constant large value.
