@@ -1,5 +1,4 @@
 Simulates different CPU scheduling algorithms with randomly generated processes using WinAPI for the GUI.\
-Prebuilt executable is provided in root directory.
 
 https://github.com/tedtb23/Scheduling-Algorithms/assets/73807771/3a305cf4-6446-440f-bbde-fab18c0ca6a1
 
